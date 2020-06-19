@@ -8,33 +8,73 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import { html, property } from 'lit-element';
-import { PageViewElement } from './page-view-element.js';
-
-// These are the shared styles needed by this element.
+import { LitElement, html } from 'lit-element';
+import { until } from 'lit-html/directives/until';
 import { SharedStyles } from './shared-styles.js';
 
 
-class MyView1 extends PageViewElement {
+class MyView1 extends LitElement {
   static get styles() {
     return [
-      SharedStyles
+      SharedStyles,
     ];
+  }
+  static get properties() {
+    return {
+      messageRequest: { type: String },
+    };
   }
 constructor() {
   super(); 
+  this._fetchMessage();
   var socket = io('http://localhost:3000');
-  socket.on('inventory', function (data) {
-    console.log(data);
-  });
+
 }
 
-render() {     
+render() {
     return html`
-      <section>
+    <div>
+        <!--
+          When rendering promises, it can be useful to display placeholder content during loading.
+          You can use the until directive for this. The first paramter should be the promise to render,
+          the optional second parameter is the template that is rendered during loading.
+        -->
+        ${until(this.messageRequest, html`Loading...`)}
+        <button @click="${() => this._fetchMessage()}">
+          Fetch message
+        </button>
+      </div>
+      
+    `;
+  }
+  _fetchMessage() {
+    this.messageRequest = new Promise((resolve) => {
+
+      setTimeout(() => resolve('Hello world'), 2000);
+    });
+  }
+
+  /*_fetchMessage() {
+    var socket = io('http://localhost:3000');
+    this.items = new Promise((resolve) => {
+      socket.on('inventory', function (data) {
+        console.log(data);
+        resolve(data); 
+      });
+    })
+
+  }*/
+
+}
+
+window.customElements.define('my-view1', MyView1);
+
+/*
+<section>
         <h2>Inventory Items</h2>
         <div class="titles">
           <div class="title">
+          
           SKU
           </div>
           <div class="title">
@@ -58,6 +98,8 @@ render() {
       <section>
       <div class="items">
         <div class="item">
+        ${until(this.items.sku, html`Loading...`)}
+        ${this.items.sku}
         </div>
         <div class="item">
           this.title
@@ -123,8 +165,4 @@ render() {
       <section>
       <p>456</p>
       </section>
-    `;
-  }
-}
-
-window.customElements.define('my-view1', MyView1);
+      */
